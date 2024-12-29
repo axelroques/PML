@@ -42,7 +42,7 @@ class Eclat(Algorithm):
         for itemset, TID_list in R.items():
             # print(f'\t itemset={itemset}, tid={TID_list}')
 
-            # Add frequent pattern 
+            # Add frequent patterns
             self.frequent_patterns[itemset] = len(TID_list) / self.n_transactions
             
             # Generate k+1-itemsets that are extensions of the current itemset

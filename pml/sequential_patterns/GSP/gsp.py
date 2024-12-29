@@ -51,11 +51,11 @@ class GSP(Algorithm):
         k = 2
         L_k = [[tuple([item])] for item in self.frequent_patterns]
         while L_k:
-            # print('\nL_k =', L_k)
+            print('\nL_k =', L_k)
 
             # Generate k-sequences
             C_k = self._generate_candidates(L_k, k)
-            # print('C_k =', C_k)
+            print('C_k =', C_k)
 
             # Prune candidates
             C_k = self._prune_candidates(L_k, C_k, k)
