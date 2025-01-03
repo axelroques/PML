@@ -18,6 +18,8 @@ class Spam(Algorithm):
         self.item_bitmaps = self._create_vertical_bitmaps()
 
         # Initialize tree data structure
+        # Not used for now, maybe later when implementing 
+        # additional pruning strategies
         self.tree = Tree()
 
     def run(self, min_support):
@@ -42,7 +44,7 @@ class Spam(Algorithm):
         Prepare sequences from a list of sets from the DataFrame.
         Transaction data is a list of list of sets.
         """
-        return [list(map(tuple, row)) for row in data['items']]
+        return [list(map(tuple, row)) for row in self.data['items']]
     
     def _create_vertical_bitmaps(self):
         """

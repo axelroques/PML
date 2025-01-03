@@ -78,7 +78,7 @@ class PatternGrowth(Algorithm):
     def _project_db(db, item):
         """
         Project database db according according to the item. 
-        Transactions are assumed to be already sorted. 
+        Transactions are assumed to be sorted. 
         """
 
         # Initialize the projected database
