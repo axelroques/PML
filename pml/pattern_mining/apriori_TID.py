@@ -1,39 +1,32 @@
 
 from itertools import combinations
-from collections import Counter
 import pandas as pd
 
-from pml.base import Algorithm
+from pml.base import FPMiner
 
-# Check if possible to generate itemsets greater than 2 items
-class Apriori(Algorithm):
+
+class AprioriTID(FPMiner):
     def __init__(self, data: pd.DataFrame, item_col: str):
-        super().__init__(data)
+        super().__init__(data, item_col)
 
-        self.item_col = item_col
-        self.transactions = self._prepare_transactions()
-        self.n_transactions = len(self.transactions)
+        # Convert input into a vertical format
+        self.TID_lists = self._create_vertical_db()
 
     def run(self, min_support: float):
         """
-        Run the Apriori algorithm.
+        Run the Apriori-TID algorithm.
         """
         
-        self.frequent_patterns = {}
-
-        # k = 1: first scan to compute support of 1-itemsets
-        counter = Counter()
-        for items in self.transactions:
-            for item in items:
-                counter[item] += 1/self.n_transactions
-
-        for candidate in counter:
-            if (counter[candidate]) >= min_support:
-                self.frequent_patterns[candidate] = counter[candidate]
+        # k = 1: find frequent 1-itemsets
+        F_k = []
+        for item, TID_list in self.TID_lists.items():
+            support = len(TID_list) / self.n_transactions
+            if support >= min_support:
+                self._frequent_patterns[frozenset([item])] = support
+                F_k.append(set([item]))
 
         # k >= 2
         k = 2
-        F_k = [set([item]) for item in self.frequent_patterns]
         while F_k:
 
             # Generate k-itemsets
@@ -48,19 +41,13 @@ class Apriori(Algorithm):
                 support = self._compute_support(candidate)
                 if support >= min_support:
                     F_k.append(candidate)
-                    self.frequent_patterns[frozenset(candidate)] = support
+                    self._frequent_patterns[frozenset(candidate)] = support
 
             k += 1
 
-    def _prepare_transactions(self):
-        """
-        Prepare transactions as a list of sets from the DataFrame.
-        """
-        return [set(items) for items in self.data[self.item_col]]
-
     def _generate_candidates(self, candidates, k):
         """
-        Generate new candidates of size k+1 from existing itemsets of size k.
+        Generate new candidates of size k+1 from existing candidates of size k.
         Returns an iterator. 
         """
         return (set(x) for x in combinations(set.union(*candidates), k))
@@ -71,7 +58,7 @@ class Apriori(Algorithm):
         i.e., not in F_{k-1}.
         """
 
-        # If k=2, all itemsets are frequent
+        # If k=2, all 1-itemsets are frequent
         if k == 2:
             return list(candidates_iter)
         
@@ -81,15 +68,19 @@ class Apriori(Algorithm):
             if all(frozenset(x) in F_k for x in combinations(candidate, k-1))
         ]
     
-    def _compute_support(self, itemset):
+    def _compute_support(self, candidate):
         """
-        Computes the support of an itemset.
+        Computes the support for a candidate itemset.
+        Support can be computed as the length of the TID-list of the intersection of 
+        the consitutive items.
         """
-        return sum([
-            1 for transaction in self.transactions 
-            if all(item in transaction for item in itemset)
-        ]) / self.n_transactions
-
+        indexes = None
+        for item in candidate:
+            if item not in self.TID_lists:
+                return 0
+            item_indexes = self.TID_lists[item]
+            indexes = item_indexes if indexes is None else indexes.intersection(item_indexes)
+        return len(indexes) / self.n_transactions if indexes else 0
 
 
 if __name__ == "__main__":
@@ -101,9 +92,8 @@ if __name__ == "__main__":
             ['bread', 'milk', 'diaper', 'beer'], ['bread', 'milk', 'diaper', 'coke']
         ]
     })
-
-    alg = Apriori(data, 'items')
+    alg = AprioriTID(data, 'items')
     alg.run(min_support=0.4)
-    
-    print('data =\n', data)
-    print('Frequent patterns =\n', alg.frequent_patterns)
+
+    print(data)
+    print(alg.get_results())

@@ -2,17 +2,15 @@
 from collections import defaultdict
 import pandas as pd
 
-from pml.base import Algorithm
+from pml.base import FPMiner
 from fp_tree import FPTree
 
-
-class FPGrowth(Algorithm):
+"""
+WIP
+"""
+class FPGrowth(FPMiner):
     def __init__(self, data: pd.DataFrame, item_col: str):
-        super().__init__(data)
-
-        self.item_col = item_col
-        self.transactions = self._prepare_transactions()
-        self.n_transactions = len(self.transactions)
+        super().__init__(data, item_col)
 
     def run(self, min_support):
         """
@@ -103,5 +101,5 @@ if __name__ == "__main__":
     alg = FPGrowth(data, 'items')
     alg.run(min_support=0.5)
     
-    print('data =\n', data)
-    print('results =', alg.results)
+    print(data)
+    print(alg.get_results())

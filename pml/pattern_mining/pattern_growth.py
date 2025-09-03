@@ -2,33 +2,20 @@
 from collections import Counter
 import pandas as pd
 
-from pml.base import Algorithm
+from pml.base import FPMiner
 
 
-class PatternGrowth(Algorithm):
+class PatternGrowth(FPMiner):
     def __init__(self, data: pd.DataFrame, item_col: str):
-        super().__init__(data)
-
-        self.item_col = item_col
-        self.transactions = self._prepare_transactions()
-        self.n_transactions = len(self.transactions)
+        super().__init__(data, item_col)
 
     def run(self, min_support):
         """
         Run a basic pattern-growth algorithm. 
         """
 
-        # Initialization
-        self.frequent_patterns = {}
-
         # Process starts with the complete db and the empty set
         self._pattern_growth(self.transactions, [], min_support)
-
-    def _prepare_transactions(self):
-        """
-        Prepare transactions as a list of sets from the DataFrame.
-        """
-        return [sorted(items) for items in self.data[self.item_col]]
 
     def _pattern_growth(self, db, itemset, min_support):
         """
@@ -47,7 +34,7 @@ class PatternGrowth(Algorithm):
             new_itemset = itemset + [item]
 
             # Save union as a frequent pattern
-            self.frequent_patterns[frozenset(new_itemset)] = support
+            self._frequent_patterns[frozenset(new_itemset)] = support
 
             # Project db
             db_proj = self._project_db(db, item)
@@ -111,5 +98,5 @@ if __name__ == "__main__":
     alg = PatternGrowth(data, 'items')
     alg.run(min_support=0.4)
     
-    print('data =\n', data)
-    print('Frequent_patterns =\n', alg.frequent_patterns)
+    print(data)
+    print(alg.get_results())

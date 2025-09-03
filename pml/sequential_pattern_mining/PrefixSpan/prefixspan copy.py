@@ -2,16 +2,12 @@
 from collections import Counter
 import pandas as pd
 
-from pml.base import Algorithm
+from pml.base import FSPMiner
 
 
-class PrefixSpan(Algorithm):
+class PrefixSpan(FSPMiner):
     def __init__(self, data: pd.DataFrame, item_col: str):
-        super().__init__(data)
-        
-        self.item_col = item_col
-        self.sequences = self._prepare_sequences()
-        self.n_sequences = len(self.sequences)
+        super().__init__(data, item_col)
 
     def run(self, min_support):
         """
@@ -23,23 +19,12 @@ class PrefixSpan(Algorithm):
 
         # Process starts with the complete db and the empty set
         self._pattern_growth(self.sequences, [], min_support)
-
-    def _prepare_sequences(self):
-        """
-        Prepare sequences from a list of sets from the DataFrame.
-        Transaction data is a list of list of sets.
-        Items need to be sorted in lexicographic order.
-        """
-        return [
-            list(map(lambda t: tuple(sorted(t)), row)) 
-            for row in self.data['items']
-        ]
     
     def _pattern_growth(self, db, sequence, min_support):
         """
         Main recursive function of a pattern-growth algorithm.
         db is a transaction database.
-        sequence is  the current itemset.
+        sequence is the current frequent sequence.
         """
         
         # Scan db to find all frequent items
@@ -136,7 +121,8 @@ class PrefixSpan(Algorithm):
                 # next items receive an '_'
                 else:
                     first_element = tuple(
-                        f'_{item}' for item in sequence[i_element][i_item+1:]
+                        f'_{item}' if not item.startswith('_') else item 
+                        for item in sequence[i_element][i_item+1:]
                     )
                     db_proj.append([first_element] + sequence[i_element+1:])
 
@@ -147,20 +133,20 @@ class PrefixSpan(Algorithm):
 
 if __name__ == "__main__":
 
-    # data = pd.DataFrame({
-    #     'items': [
-    #         [('bread',), ('milk',)], [('bread',), ('diaper',), ('beer',), ('egg',)], [('milk',), ('diaper',), ('beer',), ('coke',)],
-    #         [('bread',), ('milk',), ('diaper',), ('beer',)], [('bread',), ('milk',), ('diaper',), ('coke',)]
-    #     ]
-    # })
     data = pd.DataFrame({
         'items': [
-            [('a',), ('a', 'c', 'b',), ('a', 'c',), ('d',), ('c', 'f',)],
-            [('a', 'd',), ('c',), ('b', 'c',), ('a', 'e',),],
-            [('e', 'f',), ('a', 'b',), ('d', 'f',), ('c',), ('b',),],
-            [('e',), ('g',), ('a', 'f',), ('c',), ('b'), ('c'),],
+            [('bread',), ('milk',)], [('bread',), ('diaper',), ('beer',), ('egg',)], [('milk',), ('diaper',), ('beer',), ('coke',)],
+            [('bread',), ('milk',), ('diaper',), ('beer',)], [('bread',), ('milk',), ('diaper',), ('coke',)]
         ]
     })
+    # data = pd.DataFrame({
+    #     'items': [
+    #         [('a',), ('a', 'c', 'b',), ('a', 'c',), ('d',), ('c', 'f',)],
+    #         [('a', 'd',), ('c',), ('b', 'c',), ('a', 'e',),],
+    #         [('e', 'f',), ('a', 'b',), ('d', 'f',), ('c',), ('b',),],
+    #         [('e',), ('g',), ('a', 'f',), ('c',), ('b'), ('c'),],
+    #     ]
+    # })
 
     alg = PrefixSpan(data, 'items')
     alg.run(min_support=0.3)

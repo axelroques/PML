@@ -1,18 +1,14 @@
 
 import pandas as pd
 
-from pml.sequential_patterns.Spam.bitmap import Bitmap
-from pml.sequential_patterns.Spam.tree import Tree
-from pml.base import Algorithm
+from pml.sequential_pattern_mining.Spam.bitmap import Bitmap
+from pml.sequential_pattern_mining.Spam.tree import Tree
+from pml.base import FSPMiner
 
 
-class Spam(Algorithm):
+class Spam(FSPMiner):
     def __init__(self, data: pd.DataFrame, item_col: str):
-        super().__init__(data)
-        
-        self.item_col = item_col
-        self.sequences = self._prepare_sequences()
-        self.n_sequences = len(self.sequences)
+        super().__init__(data, item_col)
 
         # Convert horizontal db input into the vertical format
         self.item_bitmaps = self._create_vertical_bitmaps()
@@ -37,14 +33,6 @@ class Spam(Algorithm):
         # Process starts with all frequent 1-itemsets
         for sequence in L_0:
             self._DFS_pruning(sequence, L_0, L_0, min_support)
-
-
-    def _prepare_sequences(self):
-        """
-        Prepare sequences from a list of sets from the DataFrame.
-        Transaction data is a list of list of sets.
-        """
-        return [list(map(tuple, row)) for row in self.data['items']]
     
     def _create_vertical_bitmaps(self):
         """
@@ -75,7 +63,6 @@ class Spam(Algorithm):
 
         return bitmaps
           
-
     def _DFS_pruning(self, sequence, S_n, I_n, min_support):
         """
         DFS-Pruning pseudo-algorithm from Ayres et al.

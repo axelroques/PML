@@ -1,27 +1,20 @@
 
 import pandas as pd
 
-from pml.base import Algorithm
+from pml.base import FPMiner
 
 
-class Eclat(Algorithm):
+class Eclat(FPMiner):
     def __init__(self, data: pd.DataFrame, item_col: str):
-        super().__init__(data)
-        
-        self.item_col = item_col
-        self.transactions = self._prepare_transactions()
-        self.n_transactions = len(self.transactions)
+        super().__init__(data, item_col)
 
-        # Convert horizontal db input into the vertical format
+        # Convert input into a vertical format
         self.TID_lists = self._create_vertical_db()
 
     def run(self, min_support: float):
         """
         Run the Eclat algorithm.
         """
-        
-        # Initialization
-        self.frequent_patterns = {}
 
         # Get frequent 1-itemsets
         R = {
@@ -43,7 +36,7 @@ class Eclat(Algorithm):
             # print(f'\t itemset={itemset}, tid={TID_list}')
 
             # Add frequent patterns
-            self.frequent_patterns[itemset] = len(TID_list) / self.n_transactions
+            self._frequent_patterns[itemset] = len(TID_list) / self.n_transactions
             
             # Generate k+1-itemsets that are extensions of the current itemset
             E = {}
@@ -64,24 +57,6 @@ class Eclat(Algorithm):
 
                 # Continue depth-first search
                 self._eclat(E, min_support)
-
-    def _prepare_transactions(self):
-        """
-        Prepare transactions as a list of sets from the DataFrame.
-        """
-        return [set(items) for items in self.data[self.item_col]]
-    
-    def _create_vertical_db(self):
-        """
-        Create a map of items to the indices of transactions containing them.
-        """
-        TID_lists = {}
-        for tid, transaction in enumerate(self.transactions):
-            for item in transaction:
-                if item not in TID_lists:
-                    TID_lists[item] = set()
-                TID_lists[item].add(tid)
-        return TID_lists
     
     def _generate_candidates(self, itemset, itemsets):
         """
@@ -112,9 +87,8 @@ if __name__ == "__main__":
             ['bread', 'milk', 'diaper', 'beer'], ['bread', 'milk', 'diaper', 'coke']
         ]
     })
-
     alg = Eclat(data, 'items')
     alg.run(min_support=0.4)
     
-    print('data =\n', data)
-    print('Frequent_patterns =\n', alg.frequent_patterns)
+    print(data)
+    print(alg.get_results())

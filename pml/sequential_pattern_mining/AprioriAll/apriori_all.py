@@ -2,22 +2,18 @@
 from collections import Counter
 import pandas as pd
 
-from pml.sequential_patterns.AprioriAll.hash_tree import HashTree
-from pml.base import Algorithm
+from pml.sequential_pattern_mining.AprioriAll.hash_tree import HashTree
+from pml.base import FSPMiner
 
 
-class AprioriAll(Algorithm):
+class AprioriAll(FSPMiner):
     """
     AprioriAll from Agrawal and Srikant, Mining Sequential Patterns (1995).
     """
 
     def __init__(self, data: pd.DataFrame, item_col: str):
-        super().__init__(data)
-
-        self.item_col = item_col
-        self.sequences = self._prepare_sequences()
-        self.n_sequences = len(self.sequences)
-
+        super().__init__(data, item_col)
+        
     def run(self, min_support=0.4):
         """
         AprioriAll algorithm.
@@ -31,14 +27,14 @@ class AprioriAll(Algorithm):
             for itemset in sequence:
                 for item in itemset:
                     counter[item] += 1/self.n_sequences
-
         for candidate in counter:
             if (counter[candidate]) >= min_support:
-                self.frequent_patterns[candidate] = counter[candidate]
+                self.frequent_patterns[((candidate,),)] = counter[candidate]
 
         # k >= 2
         k = 2
-        L_k = [[tuple([item])] for item in self.frequent_patterns]
+        L_k = [[tuple(item)] for itemset in self.frequent_patterns for item in itemset]
+        print('L_k =', L_k)
         while L_k:
             # print('\n L_k =', L_k)
 
@@ -56,13 +52,6 @@ class AprioriAll(Algorithm):
 
             k += 1
 
-    def _prepare_sequences(self):
-        """
-        Prepare sequences from a list of sets from the DataFrame.
-        Transaction data is a list of list of sets.
-        """
-        return [list(map(tuple, row)) for row in data['items']]
-    
     def _generate_candidates(self, L_k):
         """
         Generate candidate sequences of size k+1 from existing k-sequences.

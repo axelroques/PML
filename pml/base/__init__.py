@@ -1,2 +1,2 @@
 
-from .algorithm import Algorithm
+from .base_classes import FPMiner, FSPMiner

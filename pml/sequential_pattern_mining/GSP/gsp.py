@@ -2,11 +2,11 @@
 from collections import Counter
 import pandas as pd
 
-from pml.sequential_patterns.GSP.hash_tree import HashTree
-from pml.base import Algorithm
+from pml.sequential_pattern_mining.GSP.hash_tree import HashTree
+from pml.base import FSPMiner
 
 
-class GSP(Algorithm):
+class GSP(FSPMiner):
     """
     GSP from Srikant and Agrawal, Mining Sequential Patterns: Generalizations 
     and Performance Improvements (1996).
@@ -14,11 +14,7 @@ class GSP(Algorithm):
     """
 
     def __init__(self, data: pd.DataFrame, item_col: str):
-        super().__init__(data)
-
-        self.item_col = item_col
-        self.sequences = self._prepare_sequences()
-        self.n_sequences = len(self.sequences)
+        super().__init__(data, item_col)
 
         # "Alternate db" representation to find item occurrences efficiently
         self.vert_temp_repr = self._create_vert_temp_repr()
@@ -42,20 +38,19 @@ class GSP(Algorithm):
             for itemset in sequence:
                 for item in itemset:
                     counter[item] += 1/self.n_sequences
-
         for candidate in counter:
             if (counter[candidate]) >= min_support:
-                self.frequent_patterns[candidate] = counter[candidate]
+                self.frequent_patterns[((candidate,),)] = counter[candidate]
 
         # k >= 2
         k = 2
-        L_k = [[tuple([item])] for item in self.frequent_patterns]
+        L_k = [[tuple(item)] for itemset in self.frequent_patterns for item in itemset]
         while L_k:
-            print('\nL_k =', L_k)
+            # print('\nL_k =', L_k)
 
             # Generate k-sequences
             C_k = self._generate_candidates(L_k, k)
-            print('C_k =', C_k)
+            # print('C_k =', C_k)
 
             # Prune candidates
             C_k = self._prune_candidates(L_k, C_k, k)
@@ -66,13 +61,6 @@ class GSP(Algorithm):
             self.frequent_patterns.update(frequent_candidates)
 
             k += 1
-
-    def _prepare_sequences(self):
-        """
-        Prepare sequences from a list of sets from the DataFrame.
-        Transaction data is a list of list of sets.
-        """
-        return [list(map(tuple, row)) for row in data['items']]
     
     def _create_vert_temp_repr(self):
         """
